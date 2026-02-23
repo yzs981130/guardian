@@ -67,7 +67,7 @@ struct AddEditProcessView: View {
                 }
             }
         }
-        .frame(minWidth: 520, minHeight: 480)
+        .frame(minWidth: 520, maxWidth: 620, minHeight: 480, maxHeight: 640)
         .onAppear { populateFields() }
     }
 
