@@ -33,20 +33,30 @@ struct ProcessListView: View {
         let status = store.statuses[config.id] ?? .unknown
 
         if status.isRunning {
-            Button("Restart") { Task { try? await store.restartProcess(config) } }
-            Button("Stop")    { Task { try? await store.stopProcess(config) } }
+            Button("Restart") { runAction { try await store.restartProcess(config) } }
+            Button("Stop") { runAction { try await store.stopProcess(config) } }
             Divider()
-            Button("Disable (bootout)") { Task { try? await store.disableProcess(config) } }
+            Button("Disable (bootout)") { runAction { try await store.disableProcess(config) } }
         } else if status == .notLoaded {
-            Button("Enable (bootstrap)") { Task { try? await store.enableProcess(config) } }
+            Button("Enable (bootstrap)") { runAction { try await store.enableProcess(config) } }
         } else {
-            Button("Start")   { Task { try? await store.startProcess(config) } }
+            Button("Start") { runAction { try await store.startProcess(config) } }
             Divider()
-            Button("Disable (bootout)") { Task { try? await store.disableProcess(config) } }
+            Button("Disable (bootout)") { runAction { try await store.disableProcess(config) } }
         }
         Divider()
         Button("Remove", role: .destructive) {
-            Task { try? await store.removeProcess(config) }
+            runAction { try await store.removeProcess(config) }
+        }
+    }
+
+    private func runAction(_ operation: @escaping () async throws -> Void) {
+        Task {
+            do {
+                try await operation()
+            } catch {
+                store.errorMessage = error.localizedDescription
+            }
         }
     }
 }

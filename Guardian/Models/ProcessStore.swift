@@ -43,18 +43,28 @@ final class ProcessStore: ObservableObject {
     func updateProcess(_ config: ProcessConfig) async throws {
         guard let idx = processes.firstIndex(where: { $0.id == config.id }) else { return }
         let old = processes[idx]
+        let oldPlistData = try? Data(contentsOf: old.plistURL)
 
-        // Take down the old service before rewriting the plist
-        await launchd.bootout(label: old.label)
-        if old.label != config.label {
-            PlistGenerator.removePlist(for: old)
+        do {
+            // Take down the old service before rewriting the plist
+            await launchd.bootout(label: old.label)
+            if old.label != config.label {
+                PlistGenerator.removePlist(for: old)
+            }
+            try PlistGenerator.writePlist(for: config)
+            try await launchd.bootstrap(plistURL: config.plistURL)
+            processes[idx] = config
+            try persistence.save(processes)
+            let status = await fetchStatus(for: config)
+            statuses[config.id] = status
+        } catch {
+            // Best-effort rollback so failed edits don't leave a service offline.
+            if let oldPlistData {
+                try? oldPlistData.write(to: old.plistURL, options: .atomic)
+            }
+            try? await launchd.bootstrap(plistURL: old.plistURL)
+            throw error
         }
-        try PlistGenerator.writePlist(for: config)
-        try await launchd.bootstrap(plistURL: config.plistURL)
-        processes[idx] = config
-        try persistence.save(processes)
-        let status = await fetchStatus(for: config)
-        statuses[config.id] = status
     }
 
     func removeProcess(_ config: ProcessConfig) async throws {
