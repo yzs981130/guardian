@@ -141,11 +141,15 @@ struct AddEditProcessView: View {
     private var logsSection: some View {
         Section("Logs") {
             HStack {
-                TextField("Stdout log path", text: $stdoutPath)
-                    .font(.system(.caption, design: .monospaced))
-                Button("Browse…") { browseForLogFile(binding: $stdoutPath) }
+                TextField("Stdout log path", text: $stdoutPath, onEditingChanged: { editing in
+                    if editing { logPathEditedManually = true }
+                })
+                .font(.system(.caption, design: .monospaced))
+                Button("Browse…") {
+                    logPathEditedManually = true
+                    browseForLogFile(binding: $stdoutPath)
+                }
             }
-            .onChange(of: stdoutPath) { _, _ in logPathEditedManually = true }
             HStack {
                 TextField("Stderr log path (leave same as stdout to merge)", text: $stderrPath)
                     .font(.system(.caption, design: .monospaced))
