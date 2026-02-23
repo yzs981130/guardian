@@ -18,16 +18,28 @@ targets:
     platform: macOS
     sources:
       - path: Guardian
+        excludes:
+          - Info.plist   # managed by xcodegen via info.properties below
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.guardian.app
         PRODUCT_NAME: Guardian
-        INFOPLIST_FILE: Guardian/Info.plist
         CODE_SIGN_ENTITLEMENTS: Guardian/Resources/Guardian.entitlements
         GENERATE_INFOPLIST_FILE: NO
         ENABLE_APP_SANDBOX: NO
+    # xcodegen generates Info.plist from these properties at project.yml's location
     info:
       path: Guardian/Info.plist
+      properties:
+        CFBundleDisplayName: Guardian
+        CFBundleIconFile: AppIcon
+        CFBundleShortVersionString: "1.0.0"
+        CFBundleVersion: "1"
+        NSHumanReadableCopyright: "Copyright © 2026"
+        NSPrincipalClass: NSApplication
+        # Agent app – no Dock icon; lives exclusively in the menu bar
+        LSUIElement: true
+        NSSupportsAutomaticTermination: false
     scheme:
       environmentVariables:
         OS_ACTIVITY_MODE: disable
