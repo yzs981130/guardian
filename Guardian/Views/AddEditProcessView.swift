@@ -84,9 +84,23 @@ struct AddEditProcessView: View {
                         .filter { !$0.isEmpty }
                         .joined(separator: "-")
                     label = "com.guardian.\(slug)"
+                    guard !logPathEditedManually else { return }
+                    let defaultLogPath = ProcessConfig.defaultLogPath(for: label)
+                    let previousStdout = stdoutPath
+                    stdoutPath = defaultLogPath
+                    if stderrPath.isEmpty || stderrPath == previousStdout {
+                        stderrPath = defaultLogPath
+                    }
                 }
-            TextField("Label (reverse-DNS, e.g. com.guardian.myserver)", text: $label)
-                .onChange(of: label) { _, _ in labelEditedManually = true }
+            TextField(
+                "Label (reverse-DNS, e.g. com.guardian.myserver)",
+                text: $label,
+                onEditingChanged: { editing in
+                    if editing {
+                        labelEditedManually = true
+                    }
+                }
+            )
                 .font(.system(.body, design: .monospaced))
         }
     }
@@ -196,8 +210,9 @@ struct AddEditProcessView: View {
         config.workingDirectory = workingDirectory.isEmpty ? nil : workingDirectory
         config.keepAlive = keepAlive
         config.runAtLoad = runAtLoad
-        config.standardOutPath = stdoutPath
-        config.standardErrorPath = stderrPath.isEmpty ? stdoutPath : stderrPath
+        let resolvedStdout = stdoutPath.isEmpty ? ProcessConfig.defaultLogPath(for: label) : stdoutPath
+        config.standardOutPath = resolvedStdout
+        config.standardErrorPath = stderrPath.isEmpty ? resolvedStdout : stderrPath
         config.environmentVariables = Dictionary(
             uniqueKeysWithValues: envVars
                 .filter { !$0.key.isEmpty }
@@ -234,7 +249,10 @@ struct AddEditProcessView: View {
             labelEditedManually = true
             logPathEditedManually = true
         } else {
-            // For new processes, auto-fill log path when label is set
+            let defaultLabel = "com.guardian.new-process"
+            label = defaultLabel
+            stdoutPath = ProcessConfig.defaultLogPath(for: defaultLabel)
+            stderrPath = stdoutPath
         }
     }
 

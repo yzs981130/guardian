@@ -74,17 +74,35 @@ struct ProcessDetailView: View {
 
         HStack(spacing: 6) {
             Button("Start") {
-                Task { try? await store.startProcess(config) }
+                Task {
+                    do {
+                        try await store.startProcess(config)
+                    } catch {
+                        store.errorMessage = error.localizedDescription
+                    }
+                }
             }
             .disabled(isRunning)
 
             Button("Stop") {
-                Task { try? await store.stopProcess(config) }
+                Task {
+                    do {
+                        try await store.stopProcess(config)
+                    } catch {
+                        store.errorMessage = error.localizedDescription
+                    }
+                }
             }
             .disabled(!isRunning)
 
             Button("Restart") {
-                Task { try? await store.restartProcess(config) }
+                Task {
+                    do {
+                        try await store.restartProcess(config)
+                    } catch {
+                        store.errorMessage = error.localizedDescription
+                    }
+                }
             }
             .disabled(!isRunning)
 
@@ -92,11 +110,23 @@ struct ProcessDetailView: View {
 
             if isNotLoaded {
                 Button("Enable") {
-                    Task { try? await store.enableProcess(config) }
+                    Task {
+                        do {
+                            try await store.enableProcess(config)
+                        } catch {
+                            store.errorMessage = error.localizedDescription
+                        }
+                    }
                 }
             } else {
                 Button("Disable") {
-                    Task { try? await store.disableProcess(config) }
+                    Task {
+                        do {
+                            try await store.disableProcess(config)
+                        } catch {
+                            store.errorMessage = error.localizedDescription
+                        }
+                    }
                 }
             }
 
