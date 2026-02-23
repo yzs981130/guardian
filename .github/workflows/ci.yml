@@ -46,3 +46,17 @@ jobs:
         run: |
           ls -la build/output/
           test -d build/output/Guardian.app && echo "✓ Guardian.app found"
+
+      - name: Package app into zip
+        run: |
+          cd build/output
+          ditto -c -k --keepParent Guardian.app ../../Guardian-ci-${{ github.sha }}.zip
+          cd ../..
+          ls -lh Guardian-ci-*.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Guardian-${{ github.sha }}
+          path: Guardian-ci-${{ github.sha }}.zip
+          retention-days: 14
