@@ -17,7 +17,6 @@ jobs:
 
       - name: Select Xcode
         run: |
-          # List available Xcode versions for debugging
           ls /Applications | grep -i xcode
           sudo xcode-select -s /Applications/Xcode_16.2.app/Contents/Developer || \
           sudo xcode-select -s "$(ls -d /Applications/Xcode*.app | sort -V | tail -1)/Contents/Developer"
@@ -31,24 +30,19 @@ jobs:
 
       - name: Build (unsigned)
         run: |
+          set -o pipefail
           xcodebuild build \
             -project Guardian.xcodeproj \
             -scheme Guardian \
             -configuration Release \
-            -destination 'platform=macOS' \
+            -destination 'platform=macOS,arch=arm64' \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             CONFIGURATION_BUILD_DIR="$PWD/build/output" \
-            | xcpretty || xcodebuild build \
-              -project Guardian.xcodeproj \
-              -scheme Guardian \
-              -configuration Release \
-              -destination 'platform=macOS' \
-              CODE_SIGN_IDENTITY="" \
-              CODE_SIGNING_REQUIRED=NO \
-              CODE_SIGNING_ALLOWED=NO \
-              CONFIGURATION_BUILD_DIR="$PWD/build/output"
+            | xcpretty
 
-      - name: Verify app bundle exists
-        run: ls -la build/output/
+      - name: Verify app bundle
+        run: |
+          ls -la build/output/
+          test -d build/output/Guardian.app && echo "✓ Guardian.app found"

@@ -49,7 +49,7 @@ struct SettingsView: View {
                         }
                         .font(.caption)
                         .buttonStyle(.borderless)
-                        .foregroundStyle(.accentColor)
+                        .foregroundStyle(Color.accentColor)
                     }
                 }
                 .padding(.vertical, 4)

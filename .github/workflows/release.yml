@@ -28,15 +28,17 @@ jobs:
 
       - name: Build Release (unsigned)
         run: |
+          set -o pipefail
           xcodebuild build \
             -project Guardian.xcodeproj \
             -scheme Guardian \
             -configuration Release \
-            -destination 'platform=macOS' \
+            -destination 'platform=macOS,arch=arm64' \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
-            CONFIGURATION_BUILD_DIR="$PWD/build/output"
+            CONFIGURATION_BUILD_DIR="$PWD/build/output" \
+            | xcpretty
 
       - name: Package app into zip
         run: |

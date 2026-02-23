@@ -39,9 +39,9 @@ actor LaunchdService {
     }
 
     /// Remove a service from launchd. Silently ignores "not found" errors.
-    func bootout(label: String) async throws {
+    func bootout(label: String) async {
         // bootout can legitimately fail if not loaded; we treat that as a no-op
-        try? await run("bootout", serviceTarget(label))
+        _ = try? await run("bootout", serviceTarget(label))
     }
 
     /// Kill any running instance and immediately start the service.

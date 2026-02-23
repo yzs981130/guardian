@@ -45,7 +45,7 @@ final class ProcessStore: ObservableObject {
         let old = processes[idx]
 
         // Take down the old service before rewriting the plist
-        try await launchd.bootout(label: old.label)
+        await launchd.bootout(label: old.label)
         if old.label != config.label {
             PlistGenerator.removePlist(for: old)
         }
@@ -58,7 +58,7 @@ final class ProcessStore: ObservableObject {
     }
 
     func removeProcess(_ config: ProcessConfig) async throws {
-        try await launchd.bootout(label: config.label)
+        await launchd.bootout(label: config.label)
         PlistGenerator.removePlist(for: config)
         processes.removeAll { $0.id == config.id }
         statuses.removeValue(forKey: config.id)
@@ -90,7 +90,7 @@ final class ProcessStore: ObservableObject {
 
     /// Boots out (disables) without removing the plist. Process won't restart until re-enabled.
     func disableProcess(_ config: ProcessConfig) async throws {
-        try await launchd.bootout(label: config.label)
+        await launchd.bootout(label: config.label)
         statuses[config.id] = .notLoaded
     }
 
