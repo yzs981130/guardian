@@ -26,6 +26,8 @@ struct AddEditProcessView: View {
     @State private var isSaving = false
     @State private var labelEditedManually = false
     @State private var logPathEditedManually = false
+    @State private var commandLineText: String = ""
+    @State private var commandParseWarning: String?
 
     private var isEditing: Bool {
         if case .edit = mode { return true }
@@ -35,6 +37,7 @@ struct AddEditProcessView: View {
     var body: some View {
         NavigationStack {
             Form {
+                if !isEditing { commandImportSection }
                 identitySection
                 executableSection
                 behaviorSection
@@ -69,6 +72,45 @@ struct AddEditProcessView: View {
         }
         .frame(minWidth: 520, maxWidth: 620, minHeight: 480, maxHeight: 640)
         .onAppear { populateFields() }
+    }
+
+    // MARK: - Form sections
+
+    private var commandImportSection: some View {
+        Section {
+            TextEditor(text: $commandLineText)
+                .font(.system(.body, design: .monospaced))
+                .frame(minHeight: 56, maxHeight: 88)
+                .overlay(alignment: .topLeading) {
+                    if commandLineText.isEmpty {
+                        Text("e.g.  NODE_ENV=prod /usr/local/bin/node server.js --port 3000")
+                            .font(.system(.body, design: .monospaced))
+                            .foregroundStyle(.tertiary)
+                            .allowsHitTesting(false)
+                            .padding(.top, 2)
+                            .padding(.leading, 4)
+                    }
+                }
+            if let warning = commandParseWarning {
+                HStack(alignment: .top, spacing: 6) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                    Text(warning)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            Button("Fill Fields from Command") {
+                parseAndFill()
+            }
+            .disabled(commandLineText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        } header: {
+            Text("Quick Import")
+        } footer: {
+            Text("Paste any shell command. Leading KEY=VALUE pairs become environment variables; the first non-assignment token is the executable; the rest become arguments. You can edit all fields after import.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
     }
 
     // MARK: - Form sections
@@ -189,6 +231,82 @@ struct AddEditProcessView: View {
         } header: {
             Text("Environment Variables")
         }
+    }
+
+    // MARK: - Command-line import
+
+    private func parseAndFill() {
+        let tokens = tokenizeShell(commandLineText)
+        guard !tokens.isEmpty else { return }
+
+        var idx = 0
+        var parsedEnvVars: [(key: String, value: String)] = []
+
+        // Collect leading KEY=VALUE pairs
+        let validKeyChars = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "_"))
+        while idx < tokens.count {
+            let token = tokens[idx]
+            guard let eqIdx = token.firstIndex(of: "="), eqIdx != token.startIndex else { break }
+            let key = String(token[..<eqIdx])
+            guard key.unicodeScalars.allSatisfy({ validKeyChars.contains($0) }),
+                  key.first?.isLetter == true || key.first == "_" else { break }
+            let value = String(token[token.index(after: eqIdx)...])
+            parsedEnvVars.append((key: key, value: value))
+            idx += 1
+        }
+
+        guard idx < tokens.count else {
+            commandParseWarning = "No executable found in the command."
+            return
+        }
+
+        let exe = tokens[idx]
+        let args = tokens[(idx + 1)...].joined(separator: " ")
+
+        executablePath = exe
+        argumentsText = args
+
+        // Merge env vars (skip keys already present)
+        let existingKeys = Set(envVars.map(\.key))
+        for pair in parsedEnvVars where !existingKeys.contains(pair.key) {
+            envVars.append(pair)
+        }
+
+        // Warn if executable is not an absolute path
+        if !exe.hasPrefix("/") {
+            commandParseWarning = "'\(exe)' is not an absolute path. Run `which \(exe)` in Terminal to find the full path (e.g. /usr/local/bin/\(exe))."
+        } else {
+            commandParseWarning = nil
+        }
+    }
+
+    /// Minimal shell tokenizer: handles single/double quotes and backslash escapes.
+    private func tokenizeShell(_ input: String) -> [String] {
+        var tokens: [String] = []
+        var current = ""
+        var inSingle = false
+        var inDouble = false
+        var i = input.startIndex
+
+        while i < input.endIndex {
+            let c = input[i]
+            let next = input.index(after: i)
+            if c == "'" && !inDouble {
+                inSingle.toggle()
+            } else if c == "\"" && !inSingle {
+                inDouble.toggle()
+            } else if c == "\\" && !inSingle && next < input.endIndex {
+                i = next
+                current.append(input[i])
+            } else if c.isWhitespace && !inSingle && !inDouble {
+                if !current.isEmpty { tokens.append(current); current = "" }
+            } else {
+                current.append(c)
+            }
+            i = input.index(after: i)
+        }
+        if !current.isEmpty { tokens.append(current) }
+        return tokens
     }
 
     // MARK: - Save
