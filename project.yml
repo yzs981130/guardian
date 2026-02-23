@@ -1,0 +1,43 @@
+name: Guardian
+
+options:
+  bundleIdPrefix: com.guardian
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    ENABLE_HARDENED_RUNTIME: YES
+
+targets:
+  Guardian:
+    type: application
+    platform: macOS
+    sources:
+      - path: Guardian
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.guardian.app
+        PRODUCT_NAME: Guardian
+        INFOPLIST_FILE: Guardian/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Guardian/Resources/Guardian.entitlements
+        GENERATE_INFOPLIST_FILE: NO
+        ENABLE_APP_SANDBOX: NO
+    info:
+      path: Guardian/Info.plist
+    scheme:
+      environmentVariables:
+        OS_ACTIVITY_MODE: disable
+
+schemes:
+  Guardian:
+    build:
+      targets:
+        Guardian: all
+    run:
+      config: Debug
+    archive:
+      config: Release

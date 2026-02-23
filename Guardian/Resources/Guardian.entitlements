@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Sandbox disabled: required to write ~/Library/LaunchAgents/ and run launchctl -->
+    <key>com.apple.security.app-sandbox</key>
+    <false/>
+    <!-- Hardened runtime: allow JIT for potential shell execution needs -->
+    <key>com.apple.security.cs.allow-jit</key>
+    <false/>
+    <!-- Required for SMAppService login item registration -->
+    <key>com.apple.developer.service-management.control</key>
+    <true/>
+</dict>
+</plist>
