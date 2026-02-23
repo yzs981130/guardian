@@ -53,6 +53,7 @@ struct AddEditProcessView: View {
                 }
             }
             .formStyle(.grouped)
+            .textFieldStyle(.roundedBorder)
             .navigationTitle(isEditing ? "Edit Process" : "Add Process")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
